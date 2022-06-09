@@ -1,0 +1,47 @@
+body{
+	width:100%;
+	max-width:800px;
+	margin:auto;
+	padding:1em;
+	border-left:solid 2pt;
+	border-left-color:#3771A2;             /*bleu python*/
+	border-right:solid 2pt;
+	border-right-color:#3771A2;             /*bleu python*/
+}
+
+div[title="footer"]{
+	margin-top:3em;
+	border-top: solid 2pt;
+    border-top-color:#FFDA4C;       /*jaune python*/
+}
+
+header{
+   height:40px;
+   border-bottom: solid 2pt;
+   border-bottom-color:#FFDA4C;       /*jaune python*/
+   margin-bottom:1em;
+}
+
+#nav ul {
+    width:100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+	text-align:left;
+}
+ 
+#nav li {
+    display: inline-block;
+}
+ 
+#nav a {
+    display: block;
+    padding: 10px;
+	color:black;
+	font-weight:bold;
+	text-decoration:none;
+}
+
+#nav a:hover{
+   text-decoration:underline;
+}

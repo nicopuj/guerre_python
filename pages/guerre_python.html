@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+   <meta name="description" content="La guerre des pythons, jeu de cartes pour travailler les notions de programmation python au lycée, d'après un travail de l'académie de Rennes.">
+   <meta name="viewport" content="width=device-width">
+   <title>La guerre des pythons</title>
+   <link rel="stylesheet" type="text/css" href="../styles/guerre_python.css" />
+</head>
+<body>
+  <div id="page">
+    <header>
+    </header>
+	<div id="bande">
+       <h1>LA GUERRE DES PYTHONS</h1>
+	</div>
+
+    <div id="fil">
+	Tour : <div><p id="ntour" class="nombre"></p></div> &nbsp;/&nbsp; Joueur : <div><p id="njoueur" class="nombre"></p></div>
+	
+	</div>
+	<div id="choix_carte">
+
+         <img id="carte" src="../images/python-200.png" alt="logo python"> 
+
+	   <div><button id="bouton_jeu" class="bouton" onclick="carte()">Commencer</button></div>
+	</div>
+	<div id="randint">
+	   <button class="bouton" onclick="de()">Simuler randint(1,6)</button> <div><p id="de" class="nombre"></p></div>
+	</div>
+
+  <footer>
+  version choix de cartes en ligne par N. PUJOL
+  <br/>d'après groupe TraAM de l'académie de Rennes
+  <br/>sous licence Creative Commons BY-NC-SA
+  </footer>
+ </div>
+<script src='../js/guerre_python.js'></script>
+<script src='../js/menu.js'></script>
+<script type="text/javascript">
+  document.querySelector("header").innerHTML = navmenu;
+</script>
+</body>
+</html>
