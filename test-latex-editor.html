@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compilateur LaTeX en ligne avec TeXLive.net</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-language_tools.min.js"></script>
+    <style>
+        .editor-container, .pdf-container {
+            height: calc(100vh - 180px);
+        }
+        #editor { 
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+        .dark-mode {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .dark-mode .toolbar {
+            background-color: #2d3748;
+            border-color: #4a5568;
+        }
+        .dark-mode .dropdown-content {
+            background-color: #2d3748;
+            border-color: #4a5568;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        .language-flag {
+            width: 20px;
+            height: 15px;
+            margin-right: 8px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .pdf-viewer {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        #pdf-embed {
+            width: 100%;
+            height: 100%;
+            min-height: 500px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <header class="py-4 flex justify-between items-center border-b border-gray-300">
+            <h1 class="text-2xl font-bold text-blue-600">
+                <i class="fas fa-square-root-alt mr-2"></i>Compilateur LaTeX avec TeXLive.net
+            </h1>
+            <div class="flex items-center space-x-4">
+                <!-- Language Selector -->
+                <div class="dropdown relative">
+                    <button class="flex items-center px-3 py-2 rounded-md bg-gray-200 hover:bg-gray-300 dark-mode:bg-gray-700 dark-mode:hover:bg-gray-600">
+                        <span class="language-flag" style="background-image: url('https://flagcdn.com/w20/fr.png'); background-size: cover;"></span>
+                        <span id="current-language">Français</span>
+                        <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                    </button>
+                    <div class="dropdown-content mt-1 rounded-md">
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark-mode:hover:bg-gray-700" onclick="changeLanguage('fr')">
+                            <span class="language-flag" style="background-image: url('https://flagcdn.com/w20/fr.png'); background-size: cover;"></span>
+                            Français
+                        </a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark-mode:hover:bg-gray-700" onclick="changeLanguage('en')">
+                            <span class="language-flag" style="background-image: url('https://flagcdn.com/w20/gb.png'); background-size: cover;"></span>
+                            English
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Dark Mode Toggle -->
+                <button id="dark-mode-toggle" class="p-2 rounded-full bg-gray-200 hover:bg-gray-300 dark-mode:bg-gray-700 dark-mode:hover:bg-gray-600">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Toolbar -->
+        <div class="toolbar bg-white p-3 rounded-md shadow-md mb-4 flex flex-wrap items-center justify-between border border-gray-300 dark-mode:bg-gray-800 dark-mode:border-gray-700">
+            <div class="flex space-x-2">
+                <button id="compile-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    <i class="fas fa-play mr-2"></i><span data-i18n="compile">Compiler</span>
+                </button>
+                <button id="save-btn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                    <i class="fas fa-save mr-2"></i><span data-i18n="save">Enregistrer</span>
+                </button>
+                <button id="load-btn" class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
+                    <i class="fas fa-folder-open mr-2"></i><span data-i18n="load">Charger</span>
+                </button>
+                <button id="update-url-btn" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+                    <i class="fas fa-link mr-2"></i><span data-i18n="update-url">Copier le lien</span>
+                </button>
+            </div>
+            <div class="flex items-center mt-2 sm:mt-0">
+                <span class="mr-2 text-sm" data-i18n="template">Modèle:</span>
+                <select id="template-select" class="px-3 py-2 border rounded-md dark-mode:bg-gray-700 dark-mode:border-gray-600">
+                    <option value="article" data-i18n="article">Article</option>
+                    <option value="report" data-i18n="report">Rapport</option>
+                    <option value="letter" data-i18n="letter">Lettre</option>
+                    <option value="beamer" data-i18n="presentation">Présentation</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Editor and PDF Viewer -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- Editor -->
+            <div class="bg-white rounded-md shadow-md border border-gray-300 dark-mode:bg-gray-800 dark-mode:border-gray-700">
+                <div class="p-3 border-b border-gray-300 bg-gray-50 dark-mode:bg-gray-700 dark-mode:border-gray-600">
+                    <h3 class="font-semibold" data-i18n="editor">Éditeur LaTeX</h3>
+                </div>
+                <div id="editor-container" style="position: relative; height: 500px;">
+                    <pre id="editor">\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+
+\title{Exemple de document LaTeX}
+\author{Votre nom}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Ceci est un exemple de document LaTeX. Vous pouvez commencer à éditer ici.
+
+\section{Mathématiques}
+La formule quadratique est donnée par:
+\[ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} \]
+
+\end{document}</pre>
+                </div>
+            </div>
+
+            <!-- PDF Viewer -->
+            <div class="bg-white rounded-md shadow-md border border-gray-300 dark-mode:bg-gray-800 dark-mode:border-gray-700">
+                <div class="p-3 border-b border-gray-300 bg-gray-50 dark-mode:bg-gray-700 dark-mode:border-gray-600 flex justify-between items-center">
+                    <h3 class="font-semibold" data-i18n="preview">Aperçu PDF</h3>
+                    <div class="flex items-center">
+                        <span id="compilation-status" class="text-sm mr-3 hidden">
+                            <i class="fas fa-spinner fa-spin mr-1"></i>
+                            <span data-i18n="compiling">Compilation en cours...</span>
+                        </span>
+                        <button id="download-pdf" class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
+                            <i class="fas fa-download mr-1"></i><span data-i18n="download">Télécharger</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="pdf-viewer" class="pdf-container w-full flex items-center justify-center bg-gray-100 dark-mode:bg-gray-900">
+                    <div class="text-center text-gray-500 dark-mode:text-gray-400">
+                        <i class="fas fa-file-pdf text-5xl mb-2"></i>
+                        <p data-i18n="compile-prompt">Cliquez sur "Compiler" pour générer le PDF</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="py-4 mt-4 border-t border-gray-300 dark-mode:border-gray-700 text-center text-sm text-gray-600 dark-mode:text-gray-400">
+            <a href="https://texlive.net/" class="text-blue-600 hover:underline dark-mode:text-blue-400">TeXLive.net</a> | 
+            <a href="https://davidcarlisle.github.io/latexcgi/" class="text-blue-600 hover:underline dark-mode:text-blue-400" data-i18n="documentation">Documentation</a> | 
+            <span data-i18n="copyright">Copyright 2020-2025 David Carlisle</span>
+        </footer>
+
+        <!-- File Input (hidden) -->
+        <input type="file" id="file-input" accept=".tex" class="hidden">
+    </div>
+
+    <script>
+        // Internationalization
+        const translations = {
+            'fr': {
+                'compile': 'Compiler',
+                'save': 'Enregistrer',
+                'load': 'Charger',
+                'update-url': 'Copier le lien',
+                'editor': 'Éditeur LaTeX',
+                'preview': 'Aperçu PDF',
+                'compile-prompt': 'Cliquez sur "Compiler" pour générer le PDF',
+                'compiling': 'Compilation en cours...',
+                'download': 'Télécharger',
+                'template': 'Modèle:',
+                'article': 'Article',
+                'report': 'Rapport',
+                'letter': 'Lettre',
+                'presentation': 'Présentation',
+                'file-saved': 'Fichier enregistré avec succès!',
+                'error-loading': 'Erreur lors du chargement du fichier',
+                'compilation-error': 'Erreur de compilation',
+                'select-file': 'Sélectionnez un fichier .tex',
+                'documentation': 'Documentation',
+                'copyright': 'Copyright 2020-2025 David Carlisle',
+                'url-copied': 'Lien copié dans le presse-papiers!'
+            },
+            'en': {
+                'compile': 'Compile',
+                'save': 'Save',
+                'load': 'Load',
+                'update-url': 'Copy URL',
+                'editor': 'LaTeX Editor',
+                'preview': 'PDF Preview',
+                'compile-prompt': 'Click "Compile" to generate PDF',
+                'compiling': 'Compiling...',
+                'download': 'Download',
+                'template': 'Template:',
+                'article': 'Article',
+                'report': 'Report',
+                'letter': 'Letter',
+                'presentation': 'Presentation',
+                'file-saved': 'File saved successfully!',
+                'error-loading': 'Error loading file',
+                'compilation-error': 'Compilation error',
+                'select-file': 'Select a .tex file',
+                'documentation': 'Documentation',
+                'copyright': 'Copyright 2020-2025 David Carlisle',
+                'url-copied': 'URL copied to clipboard!'
+            }
+        };
+
+        // Current language
+        let currentLanguage = 'fr';
+
+        // Change language function
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            document.getElementById('current-language').textContent = lang === 'fr' ? 'Français' : 'English';
+            
+            // Update all elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = translations[lang][key];
+            });
+            
+            // Update template options
+            const templateSelect = document.getElementById('template-select');
+            Array.from(templateSelect.options).forEach(option => {
+                const key = option.getAttribute('data-i18n');
+                option.textContent = translations[lang][key];
+            });
+        }
+
+        // Dark mode toggle
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        let darkMode = false;
+
+        darkModeToggle.addEventListener('click', () => {
+            darkMode = !darkMode;
+            document.body.classList.toggle('dark-mode');
+            
+            if (darkMode) {
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                localStorage.setItem('darkMode', 'enabled');
+                editor.setTheme('ace/theme/tomorrow_night');
+            } else {
+                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                localStorage.setItem('darkMode', 'disabled');
+                editor.setTheme('ace/theme/chrome');
+            }
+        });
+
+        // Check for saved dark mode preference
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.body.classList.add('dark-mode');
+            darkMode = true;
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+
+        // Initialize ACE Editor
+		ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12') ;
+        const editor = ace.edit("editor");
+        editor.setTheme(darkMode ? "ace/theme/tomorrow_night" : "ace/theme/textmate");
+        editor.getSession().setMode("ace/mode/latex");
+        editor.setOptions({
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: true,
+            fontSize: "14px",
+            showPrintMargin: false
+        });
+
+        // Template selection
+        document.getElementById('template-select').addEventListener('change', function() {
+            const templates = {
+                'article': `\\documentclass{article}
+\\usepackage[utf8]{inputenc}
+\\usepackage[french]{babel}
+
+\\title{Titre}
+\\author{Auteur}
+\\date{\\today}
+
+\\begin{document}
+
+\\maketitle
+
+\\section{Introduction}
+Ceci est un exemple de document LaTeX de type article.
+
+\\end{document}`,
+
+                'report': `\\documentclass{report}
+\\usepackage[utf8]{inputenc}
+\\usepackage[french]{babel}
+
+\\title{Rapport}
+\\author{Auteur}
+\\date{\\today}
+
+\\begin{document}
+
+\\maketitle
+
+\\chapter{Introduction}
+Ceci est un exemple de document LaTeX de type rapport.
+
+\\end{document}`,
+
+                'letter': `\\documentclass{letter}
+\\usepackage[utf8]{inputenc}
+\\usepackage[french]{babel}
+
+\\address{Votre adresse \\\\ Ville, Code postal}
+\\signature{Votre nom}
+
+\\begin{document}
+
+\\begin{letter}{Destinataire \\\\ Son adresse \\\\ Ville, Code postal}
+\\opening{Madame, Monsieur,}
+
+Contenu de votre lettre.
+
+\\closing{Cordialement,}
+\\end{letter}
+
+\\end{document}`,
+
+                'beamer': `\\documentclass{beamer}
+\\usepackage[utf8]{inputenc}
+\\usepackage[french]{babel}
+
+\\title{Présentation}
+\\author{Auteur}
+\\date{\\today}
+
+\\begin{document}
+
+\\frame{\\titlepage}
+
+\\begin{frame}
+\\frametitle{Première diapositive}
+Contenu de votre première diapositive.
+\\end{frame}
+
+\\end{document}`
+            };
+
+            editor.setValue(templates[this.value], -1);
+        });
+
+        // Save button
+        document.getElementById('save-btn').addEventListener('click', function() {
+            const content = editor.getValue();
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'document.tex';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Show notification
+            alert(translations[currentLanguage]['file-saved']);
+        });
+
+        // Load button
+        document.getElementById('load-btn').addEventListener('click', function() {
+            document.getElementById('file-input').click();
+        });
+
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    editor.setValue(e.target.result, -1);
+                } catch (error) {
+                    alert(translations[currentLanguage]['error-loading']);
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Update/Copy URL button
+        document.getElementById('update-url-btn').addEventListener('click', function() {
+            const content = editor.getValue();
+            const newUrl = window.location.origin + window.location.pathname + '?' + encodeURIComponent(content).replace(/\$/g, '%24');
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(newUrl).then(() => {
+                alert(translations[currentLanguage]['url-copied']);
+            }).catch(err => {
+                console.error('Could not copy URL: ', err);
+            });
+        });
+
+        // Check for URL content
+        if (window.location.search) {
+            const content = decodeURIComponent(window.location.search.substring(1));
+            editor.setValue(content, -1);
+        }
+
+        // Compile button - using TeXLive.net API
+        document.getElementById('compile-btn').addEventListener('click', function() {
+            const latexContent = editor.getValue();
+            const statusElement = document.getElementById('compilation-status');
+            alert(latexContent);
+            // Show compiling status
+            statusElement.classList.remove('hidden');
+            
+            // Prepare form data for TeXLive.net API
+            const formData = new FormData();
+            
+            formData.append('filename[]', 'document.tex');
+            formData.append("filecontents[]", latexContent);
+
+			formData.append("return", "pdf");
+            
+            // Call TeXLive.net API
+            fetch('https://texlive.net/cgi-bin/latexcgi', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(translations[currentLanguage]['compilation-error']);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Hide compiling status
+                statusElement.classList.add('hidden');
+                
+                // Create URL for the PDF
+                const pdfUrl = URL.createObjectURL(blob);
+                
+                // Display PDF in viewer
+                const pdfViewer = document.getElementById('pdf-viewer');
+                pdfViewer.innerHTML = `
+                    <embed id="pdf-embed" src="${pdfUrl}" type="application/pdf">
+                `;
+                
+                // Set up download button
+                document.getElementById('download-pdf').onclick = function() {
+                    const a = document.createElement('a');
+                    a.href = pdfUrl;
+                    a.download = 'document.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                };
+            })
+            .catch(error => {
+                statusElement.classList.add('hidden');
+                alert(error.message);
+                console.error('Compilation error:', error);
+            });
+        });
+
+        // Initialize dropdown functionality
+        document.querySelectorAll('.dropdown').forEach(dropdown => {
+            dropdown.addEventListener('mouseleave', () => {
+                dropdown.querySelector('.dropdown-content').style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
