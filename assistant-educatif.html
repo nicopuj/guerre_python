@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistant Éducatif Albert</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        #chat-window::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chat-window::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        #chat-window::-webkit-scrollbar-thumb {
+            background-color: #94a3b8;
+            border-radius: 10px;
+            border: 2px solid #f1f5f9;
+        }
+        
+        .subject-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .subject-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .typing-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #94a3b8;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-indicator:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto max-w-6xl p-4 h-screen flex flex-col">
+        
+        <!-- En-tête -->
+        <header class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                    🎓 Assistant Éducatif Albert
+                </h1>
+                <p class="text-gray-600">
+                    Votre compagnon IA pour l'apprentissage et l'enseignement
+                </p>
+            </div>
+        </header>
+
+        <div class="flex-1 flex gap-6 overflow-hidden">
+            
+            <!-- Panneau latéral -->
+            <aside class="w-80 bg-white rounded-xl shadow-lg p-6 flex flex-col">
+                
+                <!-- Configuration API -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">🔑 Configuration</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label for="api-key" class="block text-sm font-medium text-gray-700 mb-1">
+                                Clé API Albert
+                            </label>
+                            <input 
+                                type="password" 
+                                id="api-key" 
+                                placeholder="Votre clé API..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                            >
+                        </div>
+                        <div>
+                            <label for="model-select" class="block text-sm font-medium text-gray-700 mb-1">
+                                Modèle
+                            </label>
+                            <select 
+                                id="model-select" 
+                                disabled
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 text-sm"
+                            >
+                                <option>Entrez votre clé API</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Niveau scolaire -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">📚 Niveau</h3>
+                    <select id="level-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="primaire">École Primaire (CP-CM2)</option>
+                        <option value="college">Collège (6ème-3ème)</option>
+                        <option value="lycee">Lycée (2nde-Terminale)</option>
+                        <option value="superieur">Enseignement Supérieur</option>
+                    </select>
+                </div>
+
+                <!-- Matières -->
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">📖 Matières</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="subject-btn bg-red-100 text-red-800 p-3 rounded-lg text-sm font-medium" data-subject="mathématiques">
+                            📊 Maths
+                        </button>
+                        <button class="subject-btn bg-blue-100 text-blue-800 p-3 rounded-lg text-sm font-medium" data-subject="français">
+                            📝 Français
+                        </button>
+                        <button class="subject-btn bg-green-100 text-green-800 p-3 rounded-lg text-sm font-medium" data-subject="sciences">
+                            🔬 Sciences
+                        </button>
+                        <button class="subject-btn bg-yellow-100 text-yellow-800 p-3 rounded-lg text-sm font-medium" data-subject="histoire">
+                            🏛️ Histoire
+                        </button>
+                        <button class="subject-btn bg-purple-100 text-purple-800 p-3 rounded-lg text-sm font-medium" data-subject="géographie">
+                            🌍 Géo
+                        </button>
+                        <button class="subject-btn bg-pink-100 text-pink-800 p-3 rounded-lg text-sm font-medium" data-subject="anglais">
+                            🇬🇧 Anglais
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Suggestions rapides -->
+                <div class="mt-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">💡 Actions rapides</h3>
+                    <div class="space-y-2">
+                        <button id="explain-btn" class="w-full bg-blue-500 text-white p-2 rounded-lg text-sm hover:bg-blue-600">
+                            Expliquer un concept
+                        </button>
+                        <button id="exercise-btn" class="w-full bg-green-500 text-white p-2 rounded-lg text-sm hover:bg-green-600">
+                            Créer des exercices
+                        </button>
+                        <button id="correct-btn" class="w-full bg-orange-500 text-white p-2 rounded-lg text-sm hover:bg-orange-600">
+                            Corriger un devoir
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Zone de Chat -->
+            <main class="flex-1 bg-white rounded-xl shadow-lg flex flex-col overflow-hidden">
+                
+                <!-- Messages -->
+                <div id="chat-window" class="flex-1 p-6 overflow-y-auto space-y-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-3 rounded-full">
+                            🎓
+                        </div>
+                        <div class="bg-gray-100 p-4 rounded-lg rounded-tl-none max-w-2xl">
+                            <p class="text-gray-800">
+                                Bonjour ! Je suis votre assistant éducatif Albert. 
+                                Je peux vous aider à :
+                            </p>
+                            <ul class="mt-2 text-gray-700 text-sm space-y-1">
+                                <li>• Expliquer des concepts difficiles</li>
+                                <li>• Créer des exercices personnalisés</li>
+                                <li>• Corriger et évaluer des devoirs</li>
+                                <li>• Préparer des cours et des leçons</li>
+                            </ul>
+                            <p class="mt-3 text-gray-600 text-sm">
+                                Configurez votre clé API et choisissez une matière pour commencer !
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicateur de frappe -->
+                <div id="typing-indicator" class="px-6 pb-2 hidden">
+                    <div class="flex items-start space-x-3">
+                        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-3 rounded-full">
+                            🎓
+                        </div>
+                        <div class="bg-gray-100 p-4 rounded-lg rounded-tl-none">
+                            <div class="flex space-x-1">
+                                <div class="typing-indicator"></div>
+                                <div class="typing-indicator"></div>
+                                <div class="typing-indicator"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zone de saisie -->
+                <div class="p-4 border-t border-gray-200">
+                    <form id="chat-form" class="flex space-x-3">
+                        <input 
+                            type="text" 
+                            id="message-input" 
+                            placeholder="Posez votre question ou décrivez ce dont vous avez besoin..."
+                            disabled
+                            class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                        >
+                        <button 
+                            type="submit" 
+                            id="send-button"
+                            disabled
+                            class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                            Envoyer
+                        </button>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION - MODIFIEZ ICI
+        // ==========================================
+        
+        // Option 1: Proxy public (recommandé - évite les problèmes CORS)
+        const API_BASE_URL = 'https://proxy.educ-ai.fr';
+        
+        // Option 2: Votre propre proxy local (si vous avez déployé le proxy)
+        // const API_BASE_URL = 'http://localhost:3000';
+        
+        // Option 3: API directe (peut avoir des problèmes CORS en local)
+        // const API_BASE_URL = 'https://albert.api.etalab.gouv.fr';
+        
+        // ==========================================
+        // CODE PRINCIPAL - NE PAS MODIFIER
+        // ==========================================
+        
+        // Éléments DOM
+        const apiKeyInput = document.getElementById('api-key');
+        const modelSelect = document.getElementById('model-select');
+        const levelSelect = document.getElementById('level-select');
+        const chatWindow = document.getElementById('chat-window');
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const typingIndicator = document.getElementById('typing-indicator');
+        
+        // Boutons
+        const subjectButtons = document.querySelectorAll('.subject-btn');
+        const explainBtn = document.getElementById('explain-btn');
+        const exerciseBtn = document.getElementById('exercise-btn');
+        const correctBtn = document.getElementById('correct-btn');
+        
+        // Variables globales
+        let apiKey = '';
+        let conversationHistory = [];
+        let currentSubject = '';
+        let currentLevel = 'college';
+        
+        // Fonction pour afficher un message
+        function displayMessage(message, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'flex items-start space-x-3';
+            
+            if (isUser) {
+                messageDiv.className += ' flex-row-reverse space-x-reverse';
+                messageDiv.innerHTML = `
+                    <div class="bg-gray-200 text-gray-800 p-3 rounded-full">
+                        👤
+                    </div>
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg rounded-tr-none max-w-2xl">
+                        <p>${message}</p>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-3 rounded-full">
+                        🎓
+                    </div>
+                    <div class="bg-gray-100 p-4 rounded-lg rounded-tl-none max-w-2xl">
+                        <div class="text-gray-800">${message}</div>
+                    </div>
+                `;
+            }
+            
+            chatWindow.appendChild(messageDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+        
+        // Fonction pour afficher une erreur
+        function displayError(error) {
+            displayMessage(`❌ <strong>Erreur:</strong> ${error}`, false);
+        }
+        
+        // Fonction pour charger les modèles
+        async function loadModels() {
+            if (!apiKey) return;
+            
+            try {
+                modelSelect.innerHTML = '<option>Chargement...</option>';
+                
+                const response = await fetch(`${API_BASE_URL}/v1/models`, {
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const models = data.data || [];
+                
+                modelSelect.innerHTML = '';
+                models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.id;
+                    option.textContent = model.id;
+                    modelSelect.appendChild(option);
+                });
+                
+                if (models.length > 0) {
+                    modelSelect.disabled = false;
+                    messageInput.disabled = false;
+                    sendButton.disabled = false;
+                    displayMessage('✅ Connexion réussie ! Choisissez une matière et commencez à poser vos questions.', false);
+                } else {
+                    throw new Error('Aucun modèle disponible');
+                }
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement des modèles:', error);
+                displayError(`Impossible de charger les modèles: ${error.message}`);
+                modelSelect.innerHTML = '<option>Erreur de chargement</option>';
+            }
+        }
+        
+        // Fonction pour créer le prompt système
+        function createSystemPrompt() {
+            const levelDescriptions = {
+                'primaire': 'école primaire (CP à CM2)',
+                'college': 'collège (6ème à 3ème)',
+                'lycee': 'lycée (2nde à Terminale)',
+                'superieur': 'enseignement supérieur'
+            };
+            
+            let systemPrompt = `Tu es Albert, un assistant éducatif spécialisé pour le niveau ${levelDescriptions[currentLevel]}.`;
+            
+            if (currentSubject) {
+                systemPrompt += ` Tu te concentres sur la matière : ${currentSubject}.`;
+            }
+            
+            systemPrompt += ` 
+            
+Tes objectifs :
+- Expliquer les concepts de manière claire et adaptée au niveau
+- Proposer des exemples concrets et pertinents
+- Encourager la réflexion et l'apprentissage actif
+- Adapter ton vocabulaire au niveau scolaire
+- Être patient et bienveillant
+
+Ton style :
+- Utilise un langage adapté au niveau scolaire
+- Donne des exemples concrets
+- Pose des questions pour vérifier la compréhension
+- Encourage et motive l'apprenant
+- Structure tes réponses clairement`;
+
+            return systemPrompt;
+        }
+        
+        // Fonction pour envoyer un message
+        async function sendMessage(message) {
+            if (!message.trim() || !apiKey || !modelSelect.value) return;
+            
+            // Afficher le message de l'utilisateur
+            displayMessage(message, true);
+            
+            // Créer l'historique avec le prompt système
+            const messages = [
+                { role: 'system', content: createSystemPrompt() },
+                ...conversationHistory,
+                { role: 'user', content: message }
+            ];
+            
+            // Afficher l'indicateur de frappe
+            typingIndicator.classList.remove('hidden');
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            
+            // Désactiver l'interface
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/v1/chat/completions`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: modelSelect.value,
+                        messages: messages,
+                        max_tokens: 1500,
+                        temperature: 0.7
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const aiMessage = data.choices[0].message.content;
+                
+                // Afficher la réponse d'Albert
+                displayMessage(aiMessage, false);
+                
+                // Ajouter à l'historique (sans le prompt système)
+                conversationHistory.push({ role: 'user', content: message });
+                conversationHistory.push({ role: 'assistant', content: aiMessage });
+                
+            } catch (error) {
+                console.error('Erreur lors de l\'envoi du message:', error);
+                displayError(`Erreur lors de la communication: ${error.message}`);
+            } finally {
+                // Réactiver l'interface
+                typingIndicator.classList.add('hidden');
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                messageInput.focus();
+            }
+        }
+        
+        // Gestionnaires d'événements
+        apiKeyInput.addEventListener('input', (e) => {
+            apiKey = e.target.value.trim();
+            if (apiKey) {
+                loadModels();
+            } else {
+                modelSelect.disabled = true;
+                messageInput.disabled = true;
+                sendButton.disabled = true;
+                modelSelect.innerHTML = '<option>Entrez votre clé API</option>';
+            }
+        });
+        
+        levelSelect.addEventListener('change', (e) => {
+            currentLevel = e.target.value;
+            if (apiKey) {
+                displayMessage(`📚 Niveau changé pour : ${e.target.options[e.target.selectedIndex].text}`, false);
+            }
+        });
+        
+        // Boutons de matières
+        subjectButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Retirer la sélection précédente
+                subjectButtons.forEach(b => b.classList.remove('ring-2', 'ring-blue-500'));
+                
+                // Ajouter la sélection actuelle
+                btn.classList.add('ring-2', 'ring-blue-500');
+                
+                currentSubject = btn.dataset.subject;
+                if (apiKey) {
+                    displayMessage(`📖 Matière sélectionnée : ${currentSubject}`, false);
+                }
+            });
+        });
+        
+        // Boutons d'actions rapides
+        explainBtn.addEventListener('click', () => {
+            if (currentSubject) {
+                messageInput.value = `Peux-tu m'expliquer un concept important en ${currentSubject} pour le niveau ${levelSelect.options[levelSelect.selectedIndex].text} ?`;
+            } else {
+                messageInput.value = 'Peux-tu m\'expliquer un concept important ?';
+            }
+            messageInput.focus();
+        });
+        
+        exerciseBtn.addEventListener('click', () => {
+            if (currentSubject) {
+                messageInput.value = `Crée-moi des exercices en ${currentSubject} adaptés au niveau ${levelSelect.options[levelSelect.selectedIndex].text}`;
+            } else {
+                messageInput.value = 'Crée-moi des exercices adaptés à mon niveau';
+            }
+            messageInput.focus();
+        });
+        
+        correctBtn.addEventListener('click', () => {
+            messageInput.value = 'Je voudrais que tu corriges mon devoir. Voici ma réponse : ';
+            messageInput.focus();
+            // Positionner le curseur à la fin
+            messageInput.setSelectionRange(messageInput.value.length, messageInput.value.length);
+        });
+        
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (message) {
+                messageInput.value = '';
+                sendMessage(message);
+            }
+        });
+        
+        // Focus automatique sur le champ de saisie
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chatForm.dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
